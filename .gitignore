@@ -1,0 +1,9 @@
+# Compiled python modules.
+.DS_Store
+*.pyc
+
+/build/
+/dist/
+/*.egg-info
+/*.egg
+
