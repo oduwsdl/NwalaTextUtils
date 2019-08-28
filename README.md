@@ -2,6 +2,11 @@
 
 Collection of text processing Python functions.
 ## Installation
+### Stable
+```
+$ pip install NwalaTextUtils
+```
+### Dev.
 ```
 $ git clone https://github.com/oduwsdl/NwalaTextUtils.git
 $ cd NwalaTextUtils/
