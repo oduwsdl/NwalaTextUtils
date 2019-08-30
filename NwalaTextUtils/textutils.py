@@ -306,10 +306,9 @@ def prlGetTxtFrmFiles(folder, cleanHtml=False):
 	resLst = parallelTask(jobsLst)
 	for res in resLst:
 		
+		res['text'] = res.pop('output')
 		if( cleanHtml ):
 			res['text'] = cleanHtml( res['text'] )
-		else:
-			res['text'] = res.pop('output')
 
 		res['input']['filename'] = res['input']['args']['infilename']
 
