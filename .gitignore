@@ -1,6 +1,6 @@
-# Compiled python modules.
 .DS_Store
 *.pyc
+NwalaTextUtils/scratch.py
 
 /build/
 /dist/
