@@ -53,6 +53,17 @@ def genericErrorInfo():
 	errMsg = fname + ', ' + str(exc_tb.tb_lineno)  + ', ' + str(sys.exc_info())
 	return errMsg
 
+def readTextFromFile(infilename):
+
+	text = ''
+
+	try:
+		with open(infilename, 'r') as infile:
+			text = infile.read()
+	except:
+		logger.error( genericErrorInfo() + ', filename: ' + infilename )
+	
+	return text
 
 #html proc - start
 def getCustomHeaderDict():
@@ -271,6 +282,43 @@ def prlGetTxtFrmURIs(urisLst, params=None):
 
 	return docsLst
 #html proc - end
+
+def prlGetTxtFrmFiles(folder, cleanHtml=False):
+	
+	folder = folder.strip()
+	if( folder == '' ):
+		return []
+
+	if( folder[-1] != '/' ):
+		folder = folder + '/'
+	
+	jobsLst = []
+	files = os.listdir(folder)
+	for i in range(len(files)):
+		
+		f = files[i].strip()
+		if( f.startswith('.') ):
+			continue
+
+		keywords = {'infilename': folder + f}
+		jobsLst.append( {'func': readTextFromFile, 'args': keywords, 'misc': False} )
+	
+	resLst = parallelTask(jobsLst)
+	for res in resLst:
+		
+		if( cleanHtml ):
+			res['text'] = cleanHtml( res['text'] )
+		else:
+			res['text'] = res.pop('output')
+
+		res['input']['filename'] = res['input']['args']['infilename']
+
+		del res['input']['args']
+		del res['input']['misc']
+		del res['input']['func']
+		del res['misc']
+
+	return resLst
 
 
 #parallel proc - start

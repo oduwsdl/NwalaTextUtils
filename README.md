@@ -26,7 +26,10 @@ $ pip install NwalaTextUtils
 ```
 
 ## Usage Examples
-### Dereference and Remove Boilerplate from URIs:
+### Dereference URI with dereferenceURI(): coming soon
+### Remove boilerplate from HTML with cleanHtml(): coming soon
+### Extract page title from HTML Page with extractPageTitleFromHTML(): coming soon
+### Dereference and Remove Boilerplate from URIs with prlGetTxtFrmURIs(): coming soon
 ```
 import json
 import logging
@@ -57,4 +60,15 @@ params = {}
 doc_lst = prlGetTxtFrmURIs(uris_lst, params=params)
 with open('doc_lst.json', 'w') as outfile:
     json.dump(doc_lst, outfile)
+```
+
+### Sample output of prlGetTxtFrmURIs():
+```
+{
+	'text': 'WHO commends the United Kingdom of Great Britain and Northern...',
+	'id': 'United Kingdom is declared free of Ebola virus disease',
+	'title': 'United Kingdom is declared free of Ebola virus disease',
+	'uri': 'http://www.euro.who.int/en/health-topics/emergencies/pages/news/news/2015/03/united-kingdom-is-declared-free-of-ebola-virus-disease'
+}
+### Parallelize function with parallelTask(): coming soon
 ```
