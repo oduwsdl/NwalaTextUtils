@@ -23,8 +23,9 @@ def setLoggerDets(loggerDets):
 		logger.setLevel( logging.ERROR )
 
 	if( 'file' in loggerDets ):
-		fileHandler = logging.FileHandler( loggerDets['file'] )
-		procLogHandler(fileHandler, loggerDets)
+		if( loggerDets['file'] != '' ):
+			fileHandler = logging.FileHandler( loggerDets['file'] )
+			procLogHandler(fileHandler, loggerDets)
 
 	procLogHandler(consoleHandler, loggerDets)
 	

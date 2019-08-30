@@ -24,6 +24,5 @@ setup(
     install_requires=[
        'requests',
        'beautifulsoup4'
-    ],
-    dependency_links=['http://github.com/misja/python-boilerpipe/tarball/master#egg=python-boilerpipe']
+    ]
 )
