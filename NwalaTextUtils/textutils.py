@@ -7,6 +7,8 @@ from boilerpipe.extract import Extractor
 from bs4 import BeautifulSoup
 from multiprocessing import Pool
 
+logger = logging.getLogger('NwalaTextUtils.textutils')
+
 def genericErrorInfo():
 	exc_type, exc_obj, exc_tb = sys.exc_info()
 	fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
