@@ -125,54 +125,52 @@ This function is similar to `prlGetTxtFrmURIs()`, but instead of dereferencing a
 Given a list of jobs and data specified by `jobsLst`, this function executed jobs in parallel using `threadCount` threads. For example `prlGetTxtFrmURIs()` used parallelized dereferencing URIs (`derefURI()`). Here's a snippet from `prlGetTxtFrmURIs()` with associated inline explanation.
 
 ```
-def prlGetTxtFrmURIs(urisLst, params=None):
+docsLst = []
+size = len(urisLst)
 
-	docsLst = []
-	size = len(urisLst)
+#<BLOCKS OF CODE NOT PERTINENT TO THE EXPLANATION OF parallelTask() HAVE BEEN DELETED FOR BREVITY>
 
-	#<BLOCKS OF CODE NOT PERTINENT TO THE EXPLANATION OF parallelTask() HAVE BEEN DELETED FOR BREVITY>
+#list containing function to be parallelized and arguments to be passed to function
+jobsLst = []
+
+for i in range(size):
+
+	printMsg = ''
+
+	if( i % 10 == 0 ):
+		printMsg = 'dereferencing uri i: ' + str(i) + ' of ' + str(size)
+
+	#keywords is a dictionary specifying arguments to be passed to derefURI()
+	#the keys of keywords (uri & sleepSec) match the parameter signature of derefURI(uri, sleepSec)
+	keywords = {
+		'uri': urisLst[i],
+		'sleepSec': 0
+	}
+
+	#jobsLst contains pool of data to be processed in parallel by func (derefURI())
+	jobsLst.append({
+		'func': derefURI, # function to be parallelized
+		'args': keywords, # arguments to pass to function
+		'misc': False,    # data to send back with this data, after processing this data
+		'print': printMsg # optional message to print when processing this request, set blank if not print required
+	})
+
+#Function call to start parallel processing, resLst contains data 
+#returned by func (derefURI) after processing each argument, len(resLst) = len(jobsLst)
+resLst = parallelTask(jobsLst)
+
+for res in resLst:
 	
-	#list containing function to be parallelized and arguments to be passed to function
-	jobsLst = []
-	
-	for i in range(size):
+	res['input'] # input data send to func (derefURI())
+	res['output']# output returned by func (derefURI()) after processing input, None if func does not return
+	res['misc']  # echo-back data by user
 
-		printMsg = ''
+	docsLst.append({
+		'text': text,
+		'id': urisLst[i],
+		'title': getPgTitleFrmHTML( res['output'] ),
+		'uri': res['input']['args']['uri']
+	})
 
-		if( i % 10 == 0 ):
-			printMsg = 'dereferencing uri i: ' + str(i) + ' of ' + str(size)
-
-		#keywords is a dictionary specifying arguments to be passed to derefURI()
-		#the keys of keywords (uri & sleepSec) match the parameter signature of derefURI(uri, sleepSec)
-		keywords = {
-			'uri': urisLst[i],
-			'sleepSec': 0
-		}
-
-		#jobsLst contains pool of data to be processed in parallel by func (derefURI())
-		jobsLst.append({
-			'func': derefURI, # function to be parallelized
-			'args': keywords, # arguments to pass to function
-			'misc': False,    # data to send back with this data, after processing this data
-			'print': printMsg # optional message to print when processing this request, set blank if not print required
-		})
-
-	#Function call to start parallel processing, resLst contains data 
-	#returned by func (derefURI) after processing each argument, len(resLst) = len(jobsLst)
-	resLst = parallelTask(jobsLst)
-
-	for res in resLst:
-		
-		res['input'] # input data send to func (derefURI())
-		res['output']# output returned by func (derefURI()) after processing input, None if func does not return
-		res['misc']  # echo-back data by user
-
-		docsLst.append({
-			'text': text,
-			'id': urisLst[i],
-			'title': getPgTitleFrmHTML( res['output'] ),
-			'uri': res['input']['args']['uri']
-		})
-
-	return docsLst
+return docsLst
 ```
