@@ -258,10 +258,10 @@ def prlGetTxtFrmURIs(urisLst, params=None):
 			printMsg = 'dereferencing uri i: ' + str(i) + ' of ' + str(size)
 
 		keywords = {
-			'URI': urisLst[i],
-			'maxSleepInSeconds': 0
+			'uri': urisLst[i],
+			'sleepSec': 0
 		}
-
+		
 		jobsLst.append( {
 			'func': derefURI, 
 			'args': keywords, 

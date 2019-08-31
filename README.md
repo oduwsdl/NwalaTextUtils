@@ -37,11 +37,11 @@ Dictionary `params` options:
 
 * (dict) `loggerDets`: Default = {}. Specifies log options. To switch on console logs, set `params['loggerDets']` as follows
 	```
-		params = {
-			'loggerDets':{		
-				'level': logging.INFO,
-			}
+	params = {
+		'loggerDets':{		
+			'level': logging.INFO,
 		}
+	}
 	```
 
 	To write log to file, set `params['loggerDets']['file']`, e.g.,
@@ -121,5 +121,53 @@ Sample output of `prlGetTxtFrmURIs()`:
 ### Dereference and Remove Boilerplate from URIs with `prlGetTxtFrmFiles(folder, rmHtml=False)`:
 This function is similar to `prlGetTxtFrmURIs()`, but instead of dereferencing and removing boilerplate from a list of URIs like `prlGetTxtFrmURIs()` does, `prlGetTxtFrmFiles()` processes a `folder` containing HTML or plaintext files. Since `rmHtml = False` by default, the function simple reads and returns plaintext files. If `rmHtml = True`, `prlGetTxtFrmFiles()` removes boilerplate (via `cleanHtml()`) from the HTML files. In summary, if the `folder` contains HTML files, set `rmHtml = True`, if `folder` contains plaintext, set `rmHtml = False`.
 
-### Parallelize function with parallelTask():
-coming soon
+### Parallelize function with `parallelTask(jobsLst, threadCount=5)`:
+Given a list of jobs and data specified by `jobsLst`, this function executed jobs in parallel using `threadCount` threads. For example `prlGetTxtFrmURIs()` used parallelized dereferencing URIs (`derefURI()`). Here's a snippet from `prlGetTxtFrmURIs()` with associated inline explanation.
+
+```
+def prlGetTxtFrmURIs(urisLst, params=None):
+
+	docsLst = []
+	size = len(urisLst)
+
+	#<blocks of code not pertinent to the explanation of parallelTask have been deleted for brevity>
+	
+	#list containing function to be parallelized and arguments to be passed to function
+	jobsLst = []
+	
+	for i in range(size):
+
+		printMsg = ''
+
+		if( i % 10 == 0 ):
+			printMsg = 'dereferencing uri i: ' + str(i) + ' of ' + str(size)
+
+		#keywords is dictionary specifying arguments to be passed to derefURI
+		#the keys (URI & maxSleepInSeconds) of keywords match the parameter signature of derefURI(URI, maxSleepInSeconds)
+		keywords = {
+			'uri': urisLst[i],
+			'sleepSec': 0
+		}
+
+		jobsLst.append( {
+			'func': derefURI, 
+			'args': keywords, 
+			'misc': False, 
+			'print': printMsg
+		})
+
+
+	resLst = parallelTask(jobsLst)
+	for res in resLst:
+		
+		text = cleanHtml( res['output'] )
+		
+		docsLst.append({
+			'text': text,
+			'id': urisLst[i],
+			'title': getPgTitleFrmHTML( res['output'] ),
+			'uri': res['input']['args']['URI']
+		})
+
+	return docsLst
+```
