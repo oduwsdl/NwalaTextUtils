@@ -1,13 +1,13 @@
 # NwalaTextUtils
 
 Collection of text processing Python functions.
-## Dependency & Installation
+## Dependency & Installation Options
 ### Dependency
 
 * [misja python-boilerpipe](https://github.com/misja/python-boilerpipe/) OR
 * [boilerpipe3](https://github.com/slaveofcode/boilerpipe3)
 
-### Installation (After installing dependency)
+### Installation after installing boilerpipe dependency
 ```
 $ pip install NwalaTextUtils
 ```
@@ -16,7 +16,7 @@ OR
 $ git clone https://github.com/oduwsdl/NwalaTextUtils.git
 $ cd NwalaTextUtils/; pip install .; cd ..; rm -rf NwalaTextUtils;
 ```
-### Installation inside Docker container
+### Installation within Python virtual environment within Docker container
 ```
 $ docker run -it --rm -v "$PWD":/usr/src/myapp -w /usr/src/myapp openkbs/jdk-mvn-py3 bash
 $ virtualenv -p python3 penv
@@ -25,11 +25,65 @@ $ pip install boilerpipe3
 $ pip install NwalaTextUtils
 ```
 
-## Usage Examples
-### Dereference URI with dereferenceURI(): coming soon
-### Remove boilerplate from HTML with cleanHtml(): coming soon
-### Extract page title from HTML Page with extractPageTitleFromHTML(): coming soon
-### Dereference and Remove Boilerplate from URIs with prlGetTxtFrmURIs(): coming soon
+## Function Documentation and Usage Examples
+
+### Dereference URI with `derefURI(uri, sleepSec=0, params=None)`: 
+Returns HTML text from `uri`. Set `sleepSec` (sleep seconds) > 0 to throttle (sleep) request.
+Dictionary `params` options:
+
+* (bool) `addResponseHeader`: Default = False. False - returns only HTML text payload. True - returns dict containing HTML text and Server response headers.
+
+* (dict) `headers`: Default = [getCustomHeaderDict()](https://github.com/oduwsdl/NwalaTextUtils/blob/logfixes/NwalaTextUtils/textutils.py#L69). User-supplied HTTP Request headers.
+
+* (dict) `loggerDets`: Default = {}. Specifies log options. To switch on console logs, set `params['loggerDets']` as follows
+	```
+		params = {
+			'loggerDets':{		
+				'level': logging.INFO,
+			}
+		}
+	```
+
+	To write log to file, set `params['loggerDets']['file']`, e.g.,
+	```
+	params['loggerDets']['file'] = '/path/to/logs.log'
+	```
+
+	To use custom log format set `params['loggerDets']['format']`, e.g.,
+	```
+	params['loggerDets']['format'] = '%(asctime)s * %(name)s * %(levelname)s * %(message)s'
+	```
+* (int)  `sizeRestrict`: Default = 4,000,000 (4 MB). Maximum size of HTML payload. If Content-Length exceeds this size, content would be discarded.
+
+* (int)  `timeout`: Default = 10, Argument passed to [timeout to requests.get](https://2.python-requests.org/en/master/user/quickstart/#timeouts)
+
+### Remove boilerplate from HTML with `cleanHtml(html, method='python-boilerpipe')`:
+Removes plaintext after removing HTML boilerplate from `html` using either the default [recommended](https://ws-dl.blogspot.com/2017/03/2017-03-20-survey-of-5-boilerplate.html) boilerplate removal method, `python-boilerpipe` or [NLTK's regex method](https://github.com/nltk/nltk/commit/39a303e5ddc4cdb1a0b00a3be426239b1c24c8bb).
+
+### Extract HTML Page title with `getPgTitleFrmHTML(html)`:
+Returns text from within HTML title tag.
+
+### Usage example of `derefURI()`, `cleanHtml()`, and `getPgTitleFrmHTML()`:
+```
+uri = 'https://time.com/3505982/ebola-new-cases-world-health-organization/'
+
+html = derefURI(uris_lst[0], 0)
+plaintext = cleanHtml(html)
+title = getPgTitleFrmHTML(html)
+
+print('title:\n', title.strip(), '\n')
+print('html prefix:\n', html[:100].strip(), '\n')
+print('plaintext prefix:\n', plaintext[:100].strip(), '\n')
+```
+
+### Dereference and Remove Boilerplate from URIs with `prlGetTxtFrmURIs(urisLst, params=None)`:
+Dereference and remove boilerplate from URIs (within `urisLst`) in parallel. `params` activates more functionalities such a activating and controlling the console logging details (see `loggerDets` above). You might need status updates (instead of the default silence) when dereferencing a large list of URIs. To control how often the log is printed, set `params['loggerDets']['updateRate']`, e.g.,
+
+```
+params['loggerDets']['updateRate'] = 10#print 1 message per 10 log status updates
+```
+
+Usage example:
 ```
 import json
 import logging
@@ -43,26 +97,19 @@ uris_lst = [
 
 params = {}
 '''
-	#to switch on console logs, set params['loggerDets'] as follows
+	#To print console logs, set params accordingly:
 	params = {
-		'loggerDets':{		
-			'level': logging.INFO,
+			'loggerDets':{		
+				'level': logging.INFO
+			}
 		}
-	}
-
-	#to write log to file, set params['loggerDets']['file'], e.g.,
-	params['loggerDets']['file'] = '/path/to/logs.log'
-
-	#to use custom log format set params['loggerDets']['format'], e.g.,
-	params['loggerDets']['format'] = '%(asctime)s * %(name)s * %(levelname)s * %(message)s'
 '''
-
 doc_lst = prlGetTxtFrmURIs(uris_lst, params=params)
 with open('doc_lst.json', 'w') as outfile:
     json.dump(doc_lst, outfile)
 ```
 
-### Sample output of prlGetTxtFrmURIs():
+Sample output of `prlGetTxtFrmURIs()`:
 ```
 {
 	'text': 'WHO commends the United Kingdom of Great Britain and Northern...',
@@ -70,5 +117,9 @@ with open('doc_lst.json', 'w') as outfile:
 	'title': 'United Kingdom is declared free of Ebola virus disease',
 	'uri': 'http://www.euro.who.int/en/health-topics/emergencies/pages/news/news/2015/03/united-kingdom-is-declared-free-of-ebola-virus-disease'
 }
-### Parallelize function with parallelTask(): coming soon
 ```
+### Dereference and Remove Boilerplate from URIs with `prlGetTxtFrmFiles(folder, rmHtml=False)`:
+This function is similar to `prlGetTxtFrmURIs()`, but instead of dereferencing and removing boilerplate from a list of URIs like `prlGetTxtFrmURIs()` does, `prlGetTxtFrmFiles()` processes a `folder` containing HTML or plaintext files. Since `rmHtml = False` by default, the function simple reads and returns plaintext files. If `rmHtml = True`, `prlGetTxtFrmFiles()` removes boilerplate (via `cleanHtml()`) from the HTML files. In summary, if the `folder` contains HTML files, set `rmHtml = True`, if `folder` contains plaintext, set `rmHtml = False`.
+
+### Parallelize function with parallelTask():
+coming soon

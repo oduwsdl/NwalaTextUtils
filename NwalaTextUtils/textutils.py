@@ -149,10 +149,10 @@ def mimicBrowser(uri, getRequestFlag=True, params=None):
 	
 	return ''
 
-def dereferenceURI(URI, maxSleepInSeconds=5, params=None):
+def derefURI(uri, sleepSec=0, params=None):
 	
-	URI = URI.strip()
-	if( len(URI) == 0 ):
+	uri = uri.strip()
+	if( len(uri) == 0 ):
 		return ''
 
 	if( params is None ):
@@ -164,19 +164,19 @@ def dereferenceURI(URI, maxSleepInSeconds=5, params=None):
 	htmlPage = ''
 	try:
 		
-		if( maxSleepInSeconds > 0 ):
-			logger.info( 'dereferenceURI(), sleep:' + str(maxSleepInSeconds) )
-			time.sleep(maxSleepInSeconds)
+		if( sleepSec > 0 ):
+			logger.info( 'derefURI(), sleep:' + str(sleepSec) )
+			time.sleep(sleepSec)
 
 		params.setdefault('sizeRestrict', 4000000)
-		htmlPage = mimicBrowser(URI, params=params)
+		htmlPage = mimicBrowser(uri, params=params)
 	except:
 		err = genericErrorInfo()
 		logger.error( err )
 	
 	return htmlPage
 
-def extractPageTitleFromHTML(html):
+def getPgTitleFrmHTML(html):
 
 	title = ''
 	try:
@@ -246,13 +246,15 @@ def prlGetTxtFrmURIs(urisLst, params=None):
 	params.setdefault('loggerDets', {})
 	setLoggerDets( params['loggerDets'] )
 
+	params['loggerDets'].setdefault('updateRate', 10)
+
 	docsLst = []
 	jobsLst = []
 	for i in range(size):
 
 		printMsg = ''
 
-		if( i % 5 == 0 ):
+		if( i % params['loggerDets']['updateRate'] == 0 ):
 			printMsg = 'dereferencing uri i: ' + str(i) + ' of ' + str(size)
 
 		keywords = {
@@ -261,7 +263,7 @@ def prlGetTxtFrmURIs(urisLst, params=None):
 		}
 
 		jobsLst.append( {
-			'func': dereferenceURI, 
+			'func': derefURI, 
 			'args': keywords, 
 			'misc': False, 
 			'print': printMsg
@@ -276,7 +278,7 @@ def prlGetTxtFrmURIs(urisLst, params=None):
 		docsLst.append({
 			'text': text,
 			'id': urisLst[i],
-			'title': extractPageTitleFromHTML( res['output'] ),
+			'title': getPgTitleFrmHTML( res['output'] ),
 			'uri': res['input']['args']['URI']
 		})
 
