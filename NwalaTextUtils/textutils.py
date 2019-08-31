@@ -261,7 +261,7 @@ def prlGetTxtFrmURIs(urisLst, params=None):
 			'uri': urisLst[i],
 			'sleepSec': 0
 		}
-		
+
 		jobsLst.append( {
 			'func': derefURI, 
 			'args': keywords, 
@@ -279,7 +279,7 @@ def prlGetTxtFrmURIs(urisLst, params=None):
 			'text': text,
 			'id': urisLst[i],
 			'title': getPgTitleFrmHTML( res['output'] ),
-			'uri': res['input']['args']['URI']
+			'uri': res['input']['args']['uri']
 		})
 
 	return docsLst
