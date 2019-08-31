@@ -283,7 +283,7 @@ def prlGetTxtFrmURIs(urisLst, params=None):
 	return docsLst
 #html proc - end
 
-def prlGetTxtFrmFiles(folder, cleanHtml=False):
+def prlGetTxtFrmFiles(folder, rmHtml=False):
 	
 	folder = folder.strip()
 	if( folder == '' ):
@@ -307,7 +307,7 @@ def prlGetTxtFrmFiles(folder, cleanHtml=False):
 	for res in resLst:
 		
 		res['text'] = res.pop('output')
-		if( cleanHtml ):
+		if( rmHtml ):
 			res['text'] = cleanHtml( res['text'] )
 
 		res['input']['filename'] = res['input']['args']['infilename']
