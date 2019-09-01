@@ -277,7 +277,6 @@ def prlGetTxtFrmURIs(urisLst, params=None):
 		
 		docsLst.append({
 			'text': text,
-			'id': urisLst[i],
 			'title': getPgTitleFrmHTML( res['output'] ),
 			'uri': res['input']['args']['uri']
 		})
