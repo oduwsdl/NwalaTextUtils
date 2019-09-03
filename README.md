@@ -27,35 +27,17 @@ $ pip install NwalaTextUtils
 
 ## Function Documentation and Usage Examples
 
-### Dereference URI with `derefURI(uri, sleepSec=0, params=None)`: 
+### Dereference URI with `derefURI(uri, sleepSec=0, sizeRestrict=4000000, headers={}, timeout=10)`: 
 Returns HTML text from `uri`. Set `sleepSec` (sleep seconds) > 0 to throttle (sleep) request.
-Dictionary `params` options:
 
-* (bool) `addResponseHeader`: Default = False. False - returns only HTML text payload. True - returns dict containing HTML text and Server response headers.
+* (int) `sleepSec`: Default = 0. The number of seconds to sleep before the request.
 
-* (dict) `headers`: Default = [getCustomHeaderDict()](https://github.com/oduwsdl/NwalaTextUtils/blob/logfixes/NwalaTextUtils/textutils.py#L69). User-supplied HTTP Request headers.
-
-* (dict) `loggerDets`: Default = {}. Specifies log options. To switch on console logs, set `params['loggerDets']` as follows
-	```
-	params = {
-		'loggerDets':{		
-			'level': logging.INFO,
-		}
-	}
-	```
-
-	To write log to file, set `params['loggerDets']['file']`, e.g.,
-	```
-	params['loggerDets']['file'] = '/path/to/logs.log'
-	```
-
-	To use custom log format set `params['loggerDets']['format']`, e.g.,
-	```
-	params['loggerDets']['format'] = '%(asctime)s * %(name)s * %(levelname)s * %(message)s'
-	```
 * (int)  `sizeRestrict`: Default = 4,000,000 (~4 MB). Maximum size of HTML payload. If Content-Length exceeds this size, content would be discarded.
 
 * (int)  `timeout`: Default = 10, Argument passed to [timeout to requests.get](https://2.python-requests.org/en/master/user/quickstart/#timeouts)
+
+* (dict) `headers`: Default = {}. If default is specified, then [getCustomHeaderDict()](https://github.com/oduwsdl/NwalaTextUtils/blob/logfixes/NwalaTextUtils/textutils.py#L69) is called to fill this value with sensible defaults. User-supplied HTTP Request headers.
+
 
 ### Remove boilerplate from HTML with `cleanHtml(html, method='python-boilerpipe')`:
 Returns plaintext after removing HTML boilerplate from `html` using either the default [recommended](https://ws-dl.blogspot.com/2017/03/2017-03-20-survey-of-5-boilerplate.html) boilerplate removal method, `python-boilerpipe` or [NLTK's regex method](https://github.com/nltk/nltk/commit/39a303e5ddc4cdb1a0b00a3be426239b1c24c8bb).
@@ -80,17 +62,15 @@ print('html prefix:\n', html[:100].strip(), '\n')
 print('plaintext prefix:\n', plaintext[:100].strip(), '\n')
 ```
 
-### Dereference and Remove Boilerplate from URIs with `prlGetTxtFrmURIs(urisLst, params=None)`:
-Dereference and remove boilerplate from URIs (within `urisLst`) in parallel. `params` activates more functionalities such a activating and controlling the console logging details (see [`loggerDets`](#dereference-uri-with-derefuriuri-sleepsec0-paramsnone) above). You might need status updates (instead of the default silence) when dereferencing a large list of URIs. To control how often the log is printed, set `params['loggerDets']['updateRate']`, e.g.,
+### Dereference and Remove Boilerplate from URIs with `prlGetTxtFrmURIs(urisLst, updateRate=10)`:
 
-```
-params['loggerDets']['updateRate'] = 10 #print 1 message per 10 log status updates
-```
+* (list) `urisLst`: The list of URIs to dereference and remove boilerplate from.
+
+* (int) `updateRate`: Default = 10. Print 1 message per `updateRate` log status updates.
 
 Usage example:
 ```
 import json
-import logging
 from NwalaTextUtils.textutils import prlGetTxtFrmURIs
 
 uris_lst = [
@@ -99,15 +79,8 @@ uris_lst = [
     'https://www.scientificamerican.com/article/why-ebola-survivors-struggle-with-new-symptoms/'
   ]
 
-params = {}
-'''
-#To print console logs, set params accordingly:
-params = { 
-	'loggerDets': {'level': logging.INFO} 
-}
-'''
 
-doc_lst = prlGetTxtFrmURIs(uris_lst, params=params)
+doc_lst = prlGetTxtFrmURIs(uris_lst)
 with open('doc_lst.json', 'w') as outfile:
     json.dump(doc_lst, outfile)
 ```
