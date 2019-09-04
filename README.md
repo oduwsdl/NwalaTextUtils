@@ -27,17 +27,16 @@ $ pip install NwalaTextUtils
 
 ## Function Documentation and Usage Examples
 
-### Dereference URI with `derefURI(uri, sleepSec=0, sizeRestrict=4000000, headers={}, timeout=10)`: 
+### Dereference URI with `derefURI(uri, sleepSec=0, timeout=10, sizeRestrict=4000000, headers={})`: 
 Returns HTML text from `uri`. Set `sleepSec` (sleep seconds) > 0 to throttle (sleep) request.
 
 * (int) `sleepSec`: Default = 0. The number of seconds to sleep before the request.
 
+* (int)  `timeout`: Default = 10. Argument passed to [timeout of requests.get](https://2.python-requests.org/en/master/user/quickstart/#timeouts)
+
 * (int)  `sizeRestrict`: Default = 4,000,000 (~4 MB). Maximum size of HTML payload. If Content-Length exceeds this size, content would be discarded.
 
-* (int)  `timeout`: Default = 10, Argument passed to [timeout to requests.get](https://2.python-requests.org/en/master/user/quickstart/#timeouts)
-
-* (dict) `headers`: Default = {}. If default is specified, then [getCustomHeaderDict()](https://github.com/oduwsdl/NwalaTextUtils/blob/logfixes/NwalaTextUtils/textutils.py#L69) is called to fill this value with sensible defaults. User-supplied HTTP Request headers.
-
+* (dict) `headers`: Default = {}. User-supplied HTTP Request headers. If default is not specified, then [getCustomHeaderDict()](https://github.com/oduwsdl/NwalaTextUtils/blob/logfixes/NwalaTextUtils/textutils.py#L69) is called to fill this value with sensible defaults.
 
 ### Remove boilerplate from HTML with `cleanHtml(html, method='python-boilerpipe')`:
 Returns plaintext after removing HTML boilerplate from `html` using either the default [recommended](https://ws-dl.blogspot.com/2017/03/2017-03-20-survey-of-5-boilerplate.html) boilerplate removal method, `python-boilerpipe` or [NLTK's regex method](https://github.com/nltk/nltk/commit/39a303e5ddc4cdb1a0b00a3be426239b1c24c8bb).

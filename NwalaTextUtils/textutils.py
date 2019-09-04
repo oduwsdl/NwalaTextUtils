@@ -65,7 +65,7 @@ def downloadSave(response, outfile):
 def mimicBrowser(uri, getRequestFlag=True, timeout=10, sizeRestrict=-1, addResponseHeader=False, saveFilePath=None, headers={}):
 	
 	uri = uri.strip()
-	if( len(uri) == 0 ):
+	if( uri == '' ):
 		return ''
 
 	if headers == {}:
@@ -76,28 +76,30 @@ def mimicBrowser(uri, getRequestFlag=True, timeout=10, sizeRestrict=-1, addRespo
 		reponseText = ''
 		if( getRequestFlag is True ):
 
-			if( saveFilePath is not None ):
-				response = requests.get(uri, headers=headers, timeout=timeout, stream=True) #, verify=False
+			if( saveFilePath is None ):
+				response = requests.get(uri, headers=headers, timeout=timeout)
 			else:
-				response = requests.get(uri, headers=headers, timeout=timeout) #, verify=False
+				response = requests.get(uri, headers=headers, timeout=timeout, stream=True)
+				
 			
 			if( sizeRestrict != -1 ):
 				if( isSizeLimitExceed(response.headers, sizeRestrict) ):
 					return 'Error: Exceeded size restriction: ' + sizeRestrict
 
 			
-			if( saveFilePath is not None ):
-				downloadSave(response, saveFilePath)
-			else:
+			if( saveFilePath is None ):
 				reponseText = response.text
+			else:
+				downloadSave(response, saveFilePath)
+				
 
 			if( addResponseHeader is True ):
-				return	{'responseHeader': response.headers, 'text': reponseText}
+				return	{'response_header': response.headers, 'text': reponseText}
 
 			return reponseText
 		else:
-			response = requests.head(uri, headers=headers, timeout=timeout)#, verify=False
-			response.headers['status-code'] = response.status_code
+			response = requests.head(uri, headers=headers, timeout=timeout)
+			response.headers['status_code'] = response.status_code
 			return response.headers
 	except:
 		logger.error(genericErrorInfo() + ', uri:' + uri)
@@ -107,10 +109,10 @@ def mimicBrowser(uri, getRequestFlag=True, timeout=10, sizeRestrict=-1, addRespo
 	
 	return ''
 
-def derefURI(uri, sleepSec=0, sizeRestrict=4000000, headers={}, timeout=10):
+def derefURI(uri, sleepSec=0, timeout=10, sizeRestrict=4000000, headers={}):
 	
 	uri = uri.strip()
-	if( len(uri) == 0 ):
+	if( uri == '' ):
 		return ''
 
 	htmlPage = ''
