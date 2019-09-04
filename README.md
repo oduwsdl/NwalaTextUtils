@@ -100,7 +100,7 @@ import logging
 from NwalaTextUtils.textutils import prlGetTxtFrmURIs
 
 uris_lst = [
-    'http://www.euro.who.int/en/health-topics/emergencies/pages/news/news/2015/03/united-kingdom-is-declared-free-of-ebola-virus-disease',
+	'http://www.euro.who.int/en/health-topics/emergencies/pages/news/news/2015/03/united-kingdom-is-declared-free-of-ebola-virus-disease',
 	'https://time.com/3505982/ebola-new-cases-world-health-organization/',
 	'https://www.scientificamerican.com/article/why-ebola-survivors-struggle-with-new-symptoms/',
 	'https://en.wikipedia.org/wiki/Ebola_virus',
@@ -114,7 +114,7 @@ uris_lst = [
 	'http://www.healthline.com/health/ebola-hemorrhagic-fever',
 	'https://www.nytimes.com/interactive/2014/07/31/world/africa/ebola-virus-outbreak-qa.html',
 	'http://www.vanityfair.com/news/2014/10/ebola-virus-epidemic-containment'
-  ]
+]
 
 logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s: %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
