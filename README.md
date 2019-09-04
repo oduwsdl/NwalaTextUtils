@@ -61,7 +61,7 @@ print('html prefix:\n', html[:100].strip(), '\n')
 print('plaintext prefix:\n', plaintext[:100].strip(), '\n')
 ```
 
-### Dereference and Remove Boilerplate from URIs with `prlGetTxtFrmURIs(urisLst, updateRate=10)`:
+### Dereference and Remove Boilerplate from URIs in parallel with `prlGetTxtFrmURIs(urisLst, updateRate=10)`:
 
 * (list) `urisLst`: The list of URIs to dereference and remove boilerplate from.
 
@@ -127,7 +127,7 @@ with open('doc_lst.json', 'w') as outfile:
     json.dump(doc_lst, outfile)
 ```
 
-### Dereference and remove Boilerplate from files with `prlGetTxtFrmFiles(folder, rmHtml=False)`:
+### Dereference and remove Boilerplate from files in parallel with `prlGetTxtFrmFiles(folder, rmHtml=False)`:
 This function is similar to `prlGetTxtFrmURIs()`, but instead of dereferencing and removing boilerplate from a list of URIs like `prlGetTxtFrmURIs()` does, `prlGetTxtFrmFiles()` processes a `folder` containing HTML or plaintext files. Since `rmHtml = False` by default, the function simple reads and returns plaintext files. If `rmHtml = True`, `prlGetTxtFrmFiles()` removes boilerplate (via `cleanHtml()`) from the HTML files. In summary, if the `folder` contains HTML files, set `rmHtml = True`, if `folder` contains plaintext, set `rmHtml = False`.
 
 ### Parallelize function with `parallelTask(jobsLst, threadCount=5)`:
