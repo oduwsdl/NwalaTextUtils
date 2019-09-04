@@ -9,42 +9,6 @@ from bs4 import BeautifulSoup
 from multiprocessing import Pool
 
 logger = logging.getLogger('NwalaTextUtils.textutils')
-fileHandler = None
-consoleHandler = logging.StreamHandler()
-
-def setLoggerDets(loggerDets):
-
-	if( len(loggerDets) == 0 ):
-		return
-
-	if( 'level' in loggerDets ):
-		logger.setLevel( loggerDets['level'] )
-	else:
-		logger.setLevel( logging.ERROR )
-
-	if( 'file' in loggerDets ):
-		if( loggerDets['file'] != '' ):
-			fileHandler = logging.FileHandler( loggerDets['file'] )
-			procLogHandler(fileHandler, loggerDets)
-
-	procLogHandler(consoleHandler, loggerDets)
-	
-def procLogHandler(handler, loggerDets):
-	
-	if( handler is None ):
-		return
-
-	formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-	handler.setFormatter(formatter)
-		
-	if( 'level' in loggerDets ):
-		handler.setLevel( loggerDets['level'] )	
-
-	if( 'format' in loggerDets ):
-		formatter = logging.Formatter( loggerDets['format'] )
-		handler.setFormatter(formatter)
-
-	logger.addHandler(handler)
 
 def genericErrorInfo():
 	exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -98,69 +62,57 @@ def downloadSave(response, outfile):
 	except:
 		logger.error( genericErrorInfo() )
 
-def mimicBrowser(uri, getRequestFlag=True, params=None):
+def mimicBrowser(uri, getRequestFlag=True, timeout=10, sizeRestrict=-1, addResponseHeader=False, saveFilePath=None, headers={}):
 	
 	uri = uri.strip()
 	if( len(uri) == 0 ):
 		return ''
 
-	if( params is None ):
-		params = {}
-
-	params.setdefault('timeout', 10)
-	params.setdefault('sizeRestrict', -1)
-	params.setdefault('headers', getCustomHeaderDict())
-	params.setdefault('addResponseHeader', False)
-
+	if headers == {}:
+		headers = getCustomHeaderDict()
 
 	try:
 		response = ''
 		reponseText = ''
-		if( getRequestFlag ):
+		if( getRequestFlag is True ):
 
-			if( 'saveFilePath' in params ):
-				response = requests.get(uri, headers=params['headers'], timeout=params['timeout'], stream=True)#, verify=False
+			if( saveFilePath is not None ):
+				response = requests.get(uri, headers=headers, timeout=timeout, stream=True) #, verify=False
 			else:
-				response = requests.get(uri, headers=params['headers'], timeout=params['timeout'])#, verify=False
+				response = requests.get(uri, headers=headers, timeout=timeout) #, verify=False
 			
-			if( params['sizeRestrict'] != -1 ):
-				if( isSizeLimitExceed(response.headers, params['sizeRestrict']) ):
-					return 'Error: Exceeded size restriction: ' + str(params['sizeRestrict'])
+			if( sizeRestrict != -1 ):
+				if( isSizeLimitExceed(response.headers, sizeRestrict) ):
+					return 'Error: Exceeded size restriction: ' + sizeRestrict
 
 			
-			if( 'saveFilePath' in params ):
-				downloadSave(response, params['saveFilePath'])
+			if( saveFilePath is not None ):
+				downloadSave(response, saveFilePath)
 			else:
 				reponseText = response.text
 
-			if( params['addResponseHeader'] ):
+			if( addResponseHeader is True ):
 				return	{'responseHeader': response.headers, 'text': reponseText}
 
 			return reponseText
 		else:
-			response = requests.head(uri, headers=params['headers'], timeout=params['timeout'])#, verify=False
+			response = requests.head(uri, headers=headers, timeout=timeout)#, verify=False
 			response.headers['status-code'] = response.status_code
 			return response.headers
 	except:
 		logger.error(genericErrorInfo() + ', uri:' + uri)
 
-		if( getRequestFlag == False ):
+		if( getRequestFlag is False ):
 			return {}
 	
 	return ''
 
-def derefURI(uri, sleepSec=0, params=None):
+def derefURI(uri, sleepSec=0, sizeRestrict=4000000, headers={}, timeout=10):
 	
 	uri = uri.strip()
 	if( len(uri) == 0 ):
 		return ''
 
-	if( params is None ):
-		params = {}
-
-	params.setdefault('loggerDets', {})
-	setLoggerDets( params['loggerDets'] )
-	
 	htmlPage = ''
 	try:
 		
@@ -168,8 +120,7 @@ def derefURI(uri, sleepSec=0, params=None):
 			logger.info( 'derefURI(), sleep:' + str(sleepSec) )
 			time.sleep(sleepSec)
 
-		params.setdefault('sizeRestrict', 4000000)
-		htmlPage = mimicBrowser(uri, params=params)
+		htmlPage = mimicBrowser(uri, sizeRestrict=sizeRestrict, headers=headers, timeout=timeout)
 	except:
 		err = genericErrorInfo()
 		logger.error( err )
@@ -234,19 +185,11 @@ def cleanHtml(html, method='python-boilerpipe'):
 
 	return ''
 
-def prlGetTxtFrmURIs(urisLst, params=None):
+def prlGetTxtFrmURIs(urisLst, updateRate=10):
 
 	size = len(urisLst)
 	if( size == 0 ):
 		return []
-
-	if( params is None ):
-		params = {}
-
-	params.setdefault('loggerDets', {})
-	setLoggerDets( params['loggerDets'] )
-
-	params['loggerDets'].setdefault('updateRate', 10)
 
 	docsLst = []
 	jobsLst = []
@@ -254,8 +197,8 @@ def prlGetTxtFrmURIs(urisLst, params=None):
 
 		printMsg = ''
 
-		if( i % params['loggerDets']['updateRate'] == 0 ):
-			printMsg = 'dereferencing uri i: ' + str(i) + ' of ' + str(size)
+		if( i % updateRate == 0 ):
+			printMsg = 'dereferencing uri ' + str(i) + ' of ' + str(size)
 
 		keywords = {
 			'uri': urisLst[i],
