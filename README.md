@@ -61,7 +61,7 @@ print('html prefix:\n', html[:100].strip(), '\n')
 print('plaintext prefix:\n', plaintext[:100].strip(), '\n')
 ```
 
-### Dereference and Remove Boilerplate from URIs in parallel with `prlGetTxtFrmURIs(urisLst, updateRate=10)`:
+### Dereference and Remove Boilerplate from URIs in parallel with `parallelGetTxtFrmURIs(urisLst, updateRate=10)`:
 
 * (list) `urisLst`: The list of URIs to dereference and remove boilerplate from.
 
@@ -70,7 +70,7 @@ print('plaintext prefix:\n', plaintext[:100].strip(), '\n')
 Usage example without logs:
 ```
 import json
-from NwalaTextUtils.textutils import prlGetTxtFrmURIs
+from NwalaTextUtils.textutils import parallelGetTxtFrmURIs
 
 uris_lst = [
     'http://www.euro.who.int/en/health-topics/emergencies/pages/news/news/2015/03/united-kingdom-is-declared-free-of-ebola-virus-disease',
@@ -79,12 +79,12 @@ uris_lst = [
   ]
 
 
-doc_lst = prlGetTxtFrmURIs(uris_lst)
+doc_lst = parallelGetTxtFrmURIs(uris_lst)
 with open('doc_lst.json', 'w') as outfile:
     json.dump(doc_lst, outfile)
 ```
 
-Sample output of `prlGetTxtFrmURIs()`:
+Sample output of `parallelGetTxtFrmURIs()`:
 ```
 {
 	'text': 'WHO commends the United Kingdom of Great Britain and Northern...',
@@ -97,7 +97,7 @@ Usage example with logs:
 ```
 import json
 import logging
-from NwalaTextUtils.textutils import prlGetTxtFrmURIs
+from NwalaTextUtils.textutils import parallelGetTxtFrmURIs
 
 uris_lst = [
 	'http://www.euro.who.int/en/health-topics/emergencies/pages/news/news/2015/03/united-kingdom-is-declared-free-of-ebola-virus-disease',
@@ -120,18 +120,18 @@ logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s: %(message)s', 
 logger = logging.getLogger(__name__)
 logger.info("starting script")
 
-doc_lst = prlGetTxtFrmURIs(uris_lst, updateRate=2)
+doc_lst = parallelGetTxtFrmURIs(uris_lst, updateRate=2)
 
 logger.info("done with script")
 with open('doc_lst.json', 'w') as outfile:
     json.dump(doc_lst, outfile)
 ```
 
-### Dereference and remove Boilerplate from files in parallel with `prlGetTxtFrmFiles(folder, rmHtml=False)`:
-This function is similar to `prlGetTxtFrmURIs()`, but instead of dereferencing and removing boilerplate from a list of URIs like `prlGetTxtFrmURIs()` does, `prlGetTxtFrmFiles()` processes a `folder` containing HTML or plaintext files. Since `rmHtml = False` by default, the function simple reads and returns plaintext files. If `rmHtml = True`, `prlGetTxtFrmFiles()` removes boilerplate (via `cleanHtml()`) from the HTML files. In summary, if the `folder` contains HTML files, set `rmHtml = True`, if `folder` contains plaintext, set `rmHtml = False`.
+### Dereference and remove Boilerplate from files in parallel with `parallelGetTxtFrmFiles(folder, rmHtml=False)`:
+This function is similar to `parallelGetTxtFrmURIs()`, but instead of dereferencing and removing boilerplate from a list of URIs like `parallelGetTxtFrmURIs()` does, `parallelGetTxtFrmFiles()` processes a `folder` containing HTML or plaintext files. Since `rmHtml = False` by default, the function simple reads and returns plaintext files. If `rmHtml = True`, `parallelGetTxtFrmFiles()` removes boilerplate (via `cleanHtml()`) from the HTML files. In summary, if the `folder` contains HTML files, set `rmHtml = True`, if `folder` contains plaintext, set `rmHtml = False`.
 
 ### Parallelize function with `parallelTask(jobsLst, threadCount=5)`:
-Given a list of jobs and data specified by `jobsLst`, this function executes jobs in parallel using `threadCount` threads. For example `prlGetTxtFrmURIs()` used `parallelTask()` to parallelize dereferencing URIs (`derefURI()`). Here's a snippet from `prlGetTxtFrmURIs()` with associated inline explanation.
+Given a list of jobs and data specified by `jobsLst`, this function executes jobs in parallel using `threadCount` threads. For example `parallelGetTxtFrmURIs()` used `parallelTask()` to parallelize dereferencing URIs (`derefURI()`). Here's a snippet from `parallelGetTxtFrmURIs()` with associated inline explanation.
 
 ```
 docsLst = []

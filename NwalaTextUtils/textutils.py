@@ -187,7 +187,7 @@ def cleanHtml(html, method='python-boilerpipe'):
 
 	return ''
 
-def prlGetTxtFrmURIs(urisLst, updateRate=10):
+def parallelGetTxtFrmURIs(urisLst, updateRate=10):
 
 	size = len(urisLst)
 	if( size == 0 ):
@@ -229,7 +229,7 @@ def prlGetTxtFrmURIs(urisLst, updateRate=10):
 	return docsLst
 #html proc - end
 
-def prlGetTxtFrmFiles(folder, rmHtml=False):
+def parallelGetTxtFrmFiles(folder, rmHtml=False):
 	
 	folder = folder.strip()
 	if( folder == '' ):
