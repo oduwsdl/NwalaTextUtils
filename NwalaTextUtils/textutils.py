@@ -1,4 +1,5 @@
 import os
+import logging
 import requests
 import sys
 import time
@@ -7,14 +8,26 @@ from boilerpipe.extract import Extractor
 from bs4 import BeautifulSoup
 from multiprocessing import Pool
 
+logger = logging.getLogger('NwalaTextUtils.textutils')
+
 def genericErrorInfo():
 	exc_type, exc_obj, exc_tb = sys.exc_info()
 	fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 	
-	errorMessage = fname + ', ' + str(exc_tb.tb_lineno)  + ', ' + str(sys.exc_info())
-	print('\tERROR:', errorMessage)
+	errMsg = fname + ', ' + str(exc_tb.tb_lineno)  + ', ' + str(sys.exc_info())
+	return errMsg
 
-	return  sys.exc_info()
+def readTextFromFile(infilename):
+
+	text = ''
+
+	try:
+		with open(infilename, 'r') as infile:
+			text = infile.read()
+	except:
+		logger.error( genericErrorInfo() + ', filename: ' + infilename )
+	
+	return text
 
 #html proc - start
 def getCustomHeaderDict():
@@ -47,84 +60,76 @@ def downloadSave(response, outfile):
 				if(chunk):
 					dfile.write(chunk) 
 	except:
-		genericErrorInfo()
+		logger.error( genericErrorInfo() )
 
-def mimicBrowser(uri, getRequestFlag=True, extraParams=None):
+def mimicBrowser(uri, getRequestFlag=True, timeout=10, sizeRestrict=-1, addResponseHeader=False, saveFilePath=None, headers={}):
 	
 	uri = uri.strip()
-	if( len(uri) == 0 ):
+	if( uri == '' ):
 		return ''
 
-	if( extraParams is None ):
-		extraParams = {}
-
-	extraParams.setdefault('timeout', 10)
-	extraParams.setdefault('sizeRestrict', -1)
-	extraParams.setdefault('headers', getCustomHeaderDict())
-	extraParams.setdefault('addResponseHeader', False)
-
+	if headers == {}:
+		headers = getCustomHeaderDict()
 
 	try:
 		response = ''
 		reponseText = ''
-		if( getRequestFlag ):
+		if( getRequestFlag is True ):
 
-			if( 'saveFilePath' in extraParams ):
-				response = requests.get(uri, headers=extraParams['headers'], timeout=extraParams['timeout'], stream=True)#, verify=False
+			if( saveFilePath is None ):
+				response = requests.get(uri, headers=headers, timeout=timeout)
 			else:
-				response = requests.get(uri, headers=extraParams['headers'], timeout=extraParams['timeout'])#, verify=False
+				response = requests.get(uri, headers=headers, timeout=timeout, stream=True)
+				
 			
-			if( extraParams['sizeRestrict'] != -1 ):
-				if( isSizeLimitExceed(response.headers, extraParams['sizeRestrict']) ):
-					return 'Error: Exceeded size restriction: ' + str(extraParams['sizeRestrict'])
+			if( sizeRestrict != -1 ):
+				if( isSizeLimitExceed(response.headers, sizeRestrict) ):
+					return 'Error: Exceeded size restriction: ' + sizeRestrict
 
 			
-			if( 'saveFilePath' in extraParams ):
-				downloadSave(response, extraParams['saveFilePath'])
-			else:
+			if( saveFilePath is None ):
 				reponseText = response.text
+			else:
+				downloadSave(response, saveFilePath)
+				
 
-			if( extraParams['addResponseHeader'] ):
-				return	{'responseHeader': response.headers, 'text': reponseText}
+			if( addResponseHeader is True ):
+				return	{'response_header': response.headers, 'text': reponseText}
 
 			return reponseText
 		else:
-			response = requests.head(uri, headers=extraParams['headers'], timeout=extraParams['timeout'])#, verify=False
-			response.headers['status-code'] = response.status_code
+			response = requests.head(uri, headers=headers, timeout=timeout)
+			response.headers['status_code'] = response.status_code
 			return response.headers
 	except:
+		logger.error(genericErrorInfo() + ', uri:' + uri)
 
-		genericErrorInfo()
-		print('\tquery is: ', uri)
-		if( getRequestFlag == False ):
+		if( getRequestFlag is False ):
 			return {}
 	
 	return ''
 
-def dereferenceURI(URI, maxSleepInSeconds=5, extraParams=None):
+def derefURI(uri, sleepSec=0, timeout=10, sizeRestrict=4000000, headers={}):
 	
-	URI = URI.strip()
-	if( len(URI) == 0 ):
+	uri = uri.strip()
+	if( uri == '' ):
 		return ''
 
-	if( extraParams is None ):
-		extraParams = {}
-	
 	htmlPage = ''
 	try:
 		
-		if( maxSleepInSeconds > 0 ):
-			print('\tderef.URI(), sleep:', maxSleepInSeconds)
-			time.sleep(maxSleepInSeconds)
+		if( sleepSec > 0 ):
+			logger.info( 'derefURI(), sleep:' + str(sleepSec) )
+			time.sleep(sleepSec)
 
-		extraParams.setdefault('sizeRestrict', 4000000)
-		htmlPage = mimicBrowser(URI, extraParams=extraParams)
+		htmlPage = mimicBrowser(uri, sizeRestrict=sizeRestrict, headers=headers, timeout=timeout)
 	except:
-		genericErrorInfo()
+		err = genericErrorInfo()
+		logger.error( err )
 	
 	return htmlPage
 
-def extractPageTitleFromHTML(html):
+def getPgTitleFrmHTML(html):
 
 	title = ''
 	try:
@@ -136,7 +141,8 @@ def extractPageTitleFromHTML(html):
 		else:
 			title = title.text.strip()
 	except:
-		genericErrorInfo()
+		err = genericErrorInfo()
+		logger.error( err )
 
 	return title
 
@@ -151,7 +157,7 @@ def cleanHtml(html, method='python-boilerpipe'):
 			extractor = Extractor(extractor='ArticleExtractor', html=html)
 			return extractor.getText()
 		except:
-			genericErrorInfo()
+			logger.error( genericErrorInfo() )
 	elif( method == 'nltk' ):
 		"""
 		Copied from NLTK package.
@@ -181,7 +187,7 @@ def cleanHtml(html, method='python-boilerpipe'):
 
 	return ''
 
-def prlGetTxtFrmURIs(urisLst):
+def parallelGetTxtFrmURIs(urisLst, updateRate=10):
 
 	size = len(urisLst)
 	if( size == 0 ):
@@ -193,16 +199,16 @@ def prlGetTxtFrmURIs(urisLst):
 
 		printMsg = ''
 
-		if( i % 10 == 0 ):
-			printMsg = '\tderef uri i: ' + str(i) + ' of ' + str(size)
+		if( i % updateRate == 0 ):
+			printMsg = 'dereferencing uri ' + str(i) + ' of ' + str(size)
 
 		keywords = {
-			'URI': urisLst[i],
-			'maxSleepInSeconds': 0
+			'uri': urisLst[i],
+			'sleepSec': 0
 		}
 
 		jobsLst.append( {
-			'func': dereferenceURI, 
+			'func': derefURI, 
 			'args': keywords, 
 			'misc': False, 
 			'print': printMsg
@@ -216,13 +222,49 @@ def prlGetTxtFrmURIs(urisLst):
 		
 		docsLst.append({
 			'text': text,
-			'id': urisLst[i],
-			'title': extractPageTitleFromHTML( res['output'] ),
-			'uri': res['input']['args']['URI']
+			'title': getPgTitleFrmHTML( res['output'] ),
+			'uri': res['input']['args']['uri']
 		})
 
 	return docsLst
 #html proc - end
+
+def parallelGetTxtFrmFiles(folder, rmHtml=False):
+	
+	folder = folder.strip()
+	if( folder == '' ):
+		return []
+
+	if( folder[-1] != '/' ):
+		folder = folder + '/'
+	
+	jobsLst = []
+	files = os.listdir(folder)
+	for i in range(len(files)):
+		
+		f = files[i].strip()
+		if( f.startswith('.') ):
+			continue
+
+		keywords = {'infilename': folder + f}
+		jobsLst.append( {'func': readTextFromFile, 'args': keywords, 'misc': False} )
+	
+	resLst = parallelTask(jobsLst)
+	for res in resLst:
+		
+		res['text'] = res.pop('output')
+		if( rmHtml ):
+			res['text'] = cleanHtml( res['text'] )
+
+		res['input']['filename'] = res['input']['args']['infilename']
+
+		del res['input']['args']
+		del res['input']['misc']
+		del res['input']['func']
+		del res['misc']
+
+	return resLst
+
 
 #parallel proc - start
 def parallelProxy(job):
@@ -231,7 +273,8 @@ def parallelProxy(job):
 
 	if( 'print' in job ):
 		if( len(job['print']) != 0 ):
-			print(job['print'])
+			
+			logger.info( job['print'] )
 
 	return {'input': job, 'output': output, 'misc': job['misc']}
 
@@ -250,7 +293,7 @@ def parallelTask(jobsLst, threadCount=5):
 		workers.close()
 		workers.join()
 	except:
-		genericErrorInfo()
+		logger.error( genericErrorInfo() )
 		return []
 
 	return resLst
