@@ -1,11 +1,7 @@
 # NwalaTextUtils
 
 Collection of text processing Python functions.
-## Dependency & Installation Options
-### Dependency
-
-* [misja python-boilerpipe](https://github.com/misja/python-boilerpipe/) OR
-* [boilerpipe3](https://github.com/slaveofcode/boilerpipe3)
+## Installation Options
 
 ### Installation after installing boilerpipe dependency
 ```
@@ -16,18 +12,15 @@ OR
 $ git clone https://github.com/oduwsdl/NwalaTextUtils.git
 $ cd NwalaTextUtils/; pip install .; cd ..; rm -rf NwalaTextUtils;
 ```
-### Installation within Python virtual environment within Docker container
+### Installation within Docker container
 ```
-$ docker run -it --rm -v "$PWD":/usr/src/myapp -w /usr/src/myapp openkbs/jdk-mvn-py3 bash
-$ virtualenv -p python3 penv
-$ source penv/bin/activate
-$ pip install boilerpipe3
+$ docker run -it --rm --name NwalaTextUtils -v "$PWD":/usr/src/myapp -w /usr/src/myapp python:3.7-stretch bash
 $ pip install NwalaTextUtils
 ```
 
 ## Function Documentation and Usage Examples
 
-### Dereference URI with `derefURI(uri, sleepSec=0, timeout=10, sizeRestrict=4000000, headers={})`: 
+##### Dereference URI with `derefURI(uri, sleepSec=0, timeout=10, sizeRestrict=4000000, headers={})`: 
 Returns HTML text from `uri`. Set `sleepSec` (sleep seconds) > 0 to throttle (sleep) request.
 
 * (int) `sleepSec`: Default = 0. The number of seconds to sleep before the request.
@@ -38,13 +31,13 @@ Returns HTML text from `uri`. Set `sleepSec` (sleep seconds) > 0 to throttle (sl
 
 * (dict) `headers`: Default = {}. User-supplied HTTP Request headers. If default is not specified, then [getCustomHeaderDict()](https://github.com/oduwsdl/NwalaTextUtils/blob/logfixes/NwalaTextUtils/textutils.py#L69) is called to fill this value with sensible defaults.
 
-### Remove boilerplate from HTML with `cleanHtml(html, method='python-boilerpipe')`:
+##### Remove boilerplate from HTML with `cleanHtml(html, method='boilerpy3')`:
 Returns plaintext after removing HTML boilerplate from `html` using either the default [recommended](https://ws-dl.blogspot.com/2017/03/2017-03-20-survey-of-5-boilerplate.html) boilerplate removal method, `python-boilerpipe` or [NLTK's regex method](https://github.com/nltk/nltk/commit/39a303e5ddc4cdb1a0b00a3be426239b1c24c8bb).
 
-### Extract HTML Page title with `getPgTitleFrmHTML(html)`:
+##### Extract HTML Page title with `getPgTitleFrmHTML(html)`:
 Returns text from within HTML title tag.
 
-### Usage example of `derefURI()`, `cleanHtml()`, and `getPgTitleFrmHTML()`:
+##### Usage example of `derefURI()`, `cleanHtml()`, and `getPgTitleFrmHTML()`:
 ```
 from NwalaTextUtils.textutils import derefURI
 from NwalaTextUtils.textutils import cleanHtml
@@ -61,7 +54,7 @@ print('html prefix:\n', html[:100].strip(), '\n')
 print('plaintext prefix:\n', plaintext[:100].strip(), '\n')
 ```
 
-### Dereference and Remove Boilerplate from URIs in parallel with `parallelGetTxtFrmURIs(urisLst, updateRate=10)`:
+##### Dereference and Remove Boilerplate from URIs in parallel with `parallelGetTxtFrmURIs(urisLst, updateRate=10)`:
 
 * (list) `urisLst`: The list of URIs to dereference and remove boilerplate from.
 
@@ -127,10 +120,10 @@ with open('doc_lst.json', 'w') as outfile:
     json.dump(doc_lst, outfile)
 ```
 
-### Dereference and remove Boilerplate from files in parallel with `parallelGetTxtFrmFiles(folder, rmHtml=False)`:
+##### Dereference and remove Boilerplate from files in parallel with `parallelGetTxtFrmFiles(folder, rmHtml=False)`:
 This function is similar to `parallelGetTxtFrmURIs()`, but instead of dereferencing and removing boilerplate from a list of URIs like `parallelGetTxtFrmURIs()` does, `parallelGetTxtFrmFiles()` processes a `folder` containing HTML or plaintext files. Since `rmHtml = False` by default, the function simple reads and returns plaintext files. If `rmHtml = True`, `parallelGetTxtFrmFiles()` removes boilerplate (via `cleanHtml()`) from the HTML files. In summary, if the `folder` contains HTML files, set `rmHtml = True`, if `folder` contains plaintext, set `rmHtml = False`.
 
-### Parallelize function with `parallelTask(jobsLst, threadCount=5)`:
+##### Parallelize function with `parallelTask(jobsLst, threadCount=5)`:
 Given a list of jobs and data specified by `jobsLst`, this function executes jobs in parallel using `threadCount` threads. For example `parallelGetTxtFrmURIs()` used `parallelTask()` to parallelize dereferencing URIs (`derefURI()`). Here's a snippet from `parallelGetTxtFrmURIs()` with associated inline explanation.
 
 ```
