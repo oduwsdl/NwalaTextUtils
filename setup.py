@@ -12,7 +12,7 @@ setup(
     description=desc,
     long_description='See: https://github.com/oduwsdl/NwalaTextUtils/',
     author='Alexander C. Nwala',
-    author_email='anwala@cs.odu.edu',
+    author_email='alexandernwala@gmail.com',
     url='https://github.com/oduwsdl/NwalaTextUtils/',
     packages=find_packages(),
     license="MIT",
@@ -22,7 +22,9 @@ setup(
         "Operating System :: OS Independent"
     ],
     install_requires=[
+       'beautifulsoup4',
+       'boilerpy3',
        'requests',
-       'beautifulsoup4'
+       'tldextract'
     ]
 )
