@@ -23,6 +23,10 @@ def genericErrorInfo(slug=''):
 
     return errMsg
 
+def updateLogger(name):
+    global logger
+    logger = logging.getLogger(name)
+
 def readTextFromFile(infilename):
 
     text = ''
@@ -36,6 +40,51 @@ def readTextFromFile(infilename):
     return text
 
 #uri/html proc - start
+
+def getDefaultIndxNames():
+
+    return [
+        'index.html',
+        'index.htm',
+        'index.shtml',
+        'index.php',
+        'index.php5',
+        'index.php4',
+        'index.php3',
+        'index.cgi',
+        'default.html',
+        'default.aspx',
+        'default.htm',
+        'home.html',
+        'home.htm',
+        'welcome.html',
+        'placeholder.html'
+    ]
+
+def getUriDepth(uri):
+
+    uri = uri.strip()
+    if( len(uri) == 0 ):
+        return -1
+
+    #credit for list: https://support.tigertech.net/index-file-names
+    defaultIndexNames = getDefaultIndxNames()
+
+    if( uri[-1] == '/' ):
+        uri = uri[:-1]
+
+    try:
+        components = urlparse(uri)
+        path = components.path.split('/')
+
+        if( len(path) == 2 and path[-1].lower() in set(defaultIndexNames) ):
+            return 0
+        else:
+            return len(path) - 1
+    except:
+        genericErrorInfo()
+        return -1
+
 def getCustomHeaderDict():
 
     headers = {
@@ -98,9 +147,13 @@ def mimicBrowser(uri, getRequestFlag=True, timeout=10, sizeRestrict=-1, addRespo
             else:
                 downloadSave(response, saveFilePath)
                 
-
+            
             if( addResponseHeader is True ):
-                return    {'response_header': response.headers, 'text': reponseText}
+                
+                response_history = [ {'status_code': resp.status_code, 'url': resp.url} for resp in response.history ]
+                response_history.append( {'status_code': response.status_code, 'url': response.url} )
+
+                return    {'response_header': response.headers, 'text': reponseText, 'response_history': response_history}
 
             return reponseText
         else:
@@ -115,7 +168,7 @@ def mimicBrowser(uri, getRequestFlag=True, timeout=10, sizeRestrict=-1, addRespo
     
     return ''
 
-def derefURI(uri, sleepSec=0, timeout=10, sizeRestrict=4000000, headers={}):
+def derefURI(uri, sleepSec=0, timeout=10, sizeRestrict=4000000, headers={}, addResponseHeader=False, **kwargs):
     
     uri = uri.strip()
     if( uri == '' ):
@@ -128,7 +181,7 @@ def derefURI(uri, sleepSec=0, timeout=10, sizeRestrict=4000000, headers={}):
             logger.info( 'derefURI(), sleep:' + str(sleepSec) )
             time.sleep(sleepSec)
 
-        htmlPage = mimicBrowser(uri, sizeRestrict=sizeRestrict, headers=headers, timeout=timeout)
+        htmlPage = mimicBrowser(uri, sizeRestrict=sizeRestrict, headers=headers, timeout=timeout, addResponseHeader=addResponseHeader)
     except:
         genericErrorInfo()
     
@@ -149,6 +202,101 @@ def getPgTitleFrmHTML(html):
         genericErrorInfo()
 
     return title
+
+def getDomain(url, includeSubdomain=False, excludeWWW=True):
+
+    url = url.strip()
+    if( len(url) == 0 ):
+        return ''
+
+    if( url.find('http') == -1  ):
+        url = 'http://' + url
+
+    domain = ''
+    
+    try:
+        ext = extract(url)
+        
+        domain = ext.domain.strip()
+        subdomain = ext.subdomain.strip()
+        suffix = ext.suffix.strip()
+
+        if( len(suffix) != 0 ):
+            suffix = '.' + suffix 
+
+        if( len(domain) != 0 ):
+            domain = domain + suffix
+        
+        if( excludeWWW ):
+            if( subdomain.find('www') == 0 ):
+                if( len(subdomain) > 3 ):
+                    subdomain = subdomain[4:]
+                else:
+                    subdomain = subdomain[3:]
+
+
+        if( len(subdomain) != 0 ):
+            subdomain = subdomain + '.'
+
+        if( includeSubdomain ):
+            domain = subdomain + domain
+    except:
+        genericErrorInfo()
+        return ''
+
+    return domain
+
+def getLinks(uri='', html='', fromMainTextFlag=True, **kwargs):
+
+    kwargs.setdefault('sleepSec', 0)
+    kwargs.setdefault('derefFlag', True)
+    kwargs.setdefault('rmFragments', True)
+
+    uri = uri.strip()
+    if( uri != '' ):
+        if( uri[-1] != '/' ):
+            uri = uri + '/'
+
+    allLinks = []
+    dedupSet = set()
+    try:
+        if( uri != '' and html == '' and kwargs['derefFlag'] is True ):
+            html = derefURI(uri, sleepSec=kwargs['sleepSec'])
+
+        if( fromMainTextFlag is True ):
+            extractor = extractors.ArticleExtractor()
+            html = extractor.get_content(html)
+
+        soup = BeautifulSoup(html, 'html.parser' )
+        links = soup.findAll('a')
+
+        for i in range( len(links) ):
+            if( links[i].has_attr('href') is False ):
+                continue
+
+            link = links[i]['href'].strip()
+            if( link == '' ):
+                continue
+            
+            linkTitle = links[i].text.strip()
+            if( link[:2] == '//' ):
+                link = 'http:' + link
+            elif( link[0] == '/' ):
+                link = uri + link[1:]
+            
+            if( link[:4] != 'http' and kwargs['rmFragments'] is True ):
+                continue
+            
+            if( link+linkTitle not in dedupSet ):
+                allLinks.append({
+                    'title': linkTitle,
+                    'link': link
+                })       
+                dedupSet.add(link+linkTitle)
+    except:
+        genericErrorInfo()
+
+    return allLinks
 
 def cleanHtml(html, method='boilerpy3'):
     
@@ -190,6 +338,36 @@ def cleanHtml(html, method='boilerpy3'):
 
     return ''
 
+def getDedupKeyForURI(uri):
+
+    uri = uri.strip()
+    if( len(uri) == 0 ):
+        return ''
+
+    exceptionDomains = ['www.youtube.com']
+
+    try:
+        scheme, netloc, path, params, query, fragment = urlparse( uri )
+        
+        netloc = netloc.strip()
+        path = path.strip()
+        optionalQuery = ''
+
+        if( len(path) != 0 ):
+            if( path[-1] != '/' ):
+                path = path + '/'
+
+        if( netloc in exceptionDomains ):
+            optionalQuery = query.strip()
+
+        netloc = netloc.replace(':80', '')
+        return netloc + path + optionalQuery
+    except:
+        print('Error uri:', uri)
+        genericErrorInfo()
+
+    return ''
+
 def naiveIsURIShort(uri):
 
     specialCases = ['tinyurl.com']
@@ -224,12 +402,16 @@ def naiveIsURIShort(uri):
 
     return False
 
-def parallelGetTxtFrmURIs(urisLst, updateRate=10):
+def parallelGetTxtFrmURIs(urisLst, updateRate=10, **kwargs):
 
     size = len(urisLst)
     if( size == 0 ):
         return []
 
+    kwargs.setdefault('threadCount', 5)
+    kwargs.setdefault('cleanHTML', True)
+    kwargs.setdefault('addResponseHeader', False)
+    
     docsLst = []
     jobsLst = []
     for i in range(size):
@@ -241,7 +423,8 @@ def parallelGetTxtFrmURIs(urisLst, updateRate=10):
 
         keywords = {
             'uri': urisLst[i],
-            'sleepSec': 0
+            'sleepSec': 0,
+            'addResponseHeader': kwargs['addResponseHeader']
         }
 
         jobsLst.append( {
@@ -252,15 +435,30 @@ def parallelGetTxtFrmURIs(urisLst, updateRate=10):
         })
 
 
-    resLst = parallelTask(jobsLst)
+    resLst = parallelTask(jobsLst, threadCount=kwargs['threadCount'])
     for res in resLst:
         
-        text = cleanHtml( res['output'] )
+        
+        if( isinstance(res['output'], dict) ):            
+            html = res['output']['text']
+            del res['output']['text']
+
+            info = res['output']
+        else:
+            html = res['output']
+            info = {}
+
+
+        if( kwargs['cleanHTML'] is True ):
+            text = cleanHtml(html)
+        else:
+            text = html
         
         docsLst.append({
             'text': text,
-            'title': getPgTitleFrmHTML( res['output'] ),
-            'uri': res['input']['args']['uri']
+            'title': getPgTitleFrmHTML(html),
+            'uri': res['input']['args']['uri'],
+            'info': info
         })
 
     return docsLst
