@@ -298,14 +298,14 @@ def getLinks(uri='', html='', fromMainTextFlag=True, **kwargs):
 
     return allLinks
 
-def cleanHtml(html, method='boilerpy3'):
+def cleanHtml(html, method='boilerpy3', reportFailure=True):
     
-    if( len(html) == 0 ):
+    if( html == '' ):
         return ''
 
     if( method == 'boilerpy3' ):
         try:
-            extractor = extractors.ArticleExtractor()
+            extractor = extractors.ArticleExtractor(raise_on_failure=reportFailure)
             return extractor.get_content(html)
         except:
             genericErrorInfo()
@@ -410,6 +410,7 @@ def parallelGetTxtFrmURIs(urisLst, updateRate=10, **kwargs):
 
     kwargs.setdefault('threadCount', 5)
     kwargs.setdefault('cleanHTML', True)
+    kwargs.setdefault('cleanHTMLReportFailure', True)
     kwargs.setdefault('addResponseHeader', False)
     
     docsLst = []
@@ -450,7 +451,7 @@ def parallelGetTxtFrmURIs(urisLst, updateRate=10, **kwargs):
 
 
         if( kwargs['cleanHTML'] is True ):
-            text = cleanHtml(html)
+            text = cleanHtml(html, reportFailure=kwargs['cleanHTMLReportFailure'])
         else:
             text = html
         
