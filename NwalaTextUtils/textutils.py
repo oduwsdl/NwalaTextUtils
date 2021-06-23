@@ -412,6 +412,8 @@ def parallelGetTxtFrmURIs(urisLst, updateRate=10, **kwargs):
     kwargs.setdefault('cleanHTML', True)
     kwargs.setdefault('cleanHTMLReportFailure', True)
     kwargs.setdefault('addResponseHeader', False)
+    kwargs.setdefault('extractLinks', False)
+    kwargs.setdefault('fromMainText', False)
     
     docsLst = []
     jobsLst = []
@@ -455,12 +457,22 @@ def parallelGetTxtFrmURIs(urisLst, updateRate=10, **kwargs):
         else:
             text = html
         
-        docsLst.append({
-            'text': text,
-            'title': getPgTitleFrmHTML(html),
-            'uri': res['input']['args']['uri'],
-            'info': info
-        })
+        if ( kwargs['extractLinks'] is True ):
+            links = getLinks(html=html, fromMainTextFlag=kwargs['fromMainText'])
+            docsLst.append({
+                'text': text,
+                'title': getPgTitleFrmHTML(html),
+                'uri': res['input']['args']['uri'],
+                'links': links,
+                'info': info
+            })
+        else:
+            docsLst.append({
+                'text': text,
+                'title': getPgTitleFrmHTML(html),
+                'uri': res['input']['args']['uri'],
+                'info': info
+            })
 
     return docsLst
 
