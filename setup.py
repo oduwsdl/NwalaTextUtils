@@ -23,7 +23,7 @@ setup(
     ],
     install_requires=[
        'beautifulsoup4',
-       'boilerpy3',
+       'boilerpy3>=1.0.4',
        'requests',
        'tldextract'
     ]
