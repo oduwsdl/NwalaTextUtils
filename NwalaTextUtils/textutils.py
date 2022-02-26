@@ -1,5 +1,6 @@
 import os
 import logging
+import re
 import requests
 import sys
 import time
@@ -298,18 +299,32 @@ def getLinks(uri='', html='', fromMainTextFlag=True, **kwargs):
 
     return allLinks
 
-def cleanHtml(html, method='boilerpy3', reportFailure=True):
+def cleanHtml(html, method='boilerpy3.ArticleExtractor', reportFailure=True):
     
     if( html == '' ):
         return ''
+    method = 'boilerpy3.ArticleExtractor' if method == 'boilerpy3' else method
 
-    if( method == 'boilerpy3' ):
+    boilerpy3Methods = {
+        'boilerpy3.DefaultExtractor': extractors.DefaultExtractor,
+        'boilerpy3.ArticleExtractor': extractors.ArticleExtractor,
+        'boilerpy3.ArticleSentencesExtractor': extractors.ArticleSentencesExtractor,
+        'boilerpy3.LargestContentExtractor': extractors.LargestContentExtractor,
+        'boilerpy3.CanolaExtractor': extractors.CanolaExtractor,
+        'boilerpy3.KeepEverythingExtractor': extractors.KeepEverythingExtractor,
+        'boilerpy3.NumWordsRulesExtractor': extractors.NumWordsRulesExtractor
+    }
+    
+    if( method in boilerpy3Methods ):
+        
         try:
-            extractor = extractors.ArticleExtractor(raise_on_failure=reportFailure)
+            extractor = boilerpy3Methods[method](raise_on_failure=reportFailure)
             return extractor.get_content(html)
         except:
             genericErrorInfo()
-    elif( method == 'nltk' ):
+            return ''
+    
+    if( method == 'nltk' ):
         """
         Copied from NLTK package.
         Remove HTML markup from the given string.
@@ -411,6 +426,7 @@ def parallelGetTxtFrmURIs(urisLst, updateRate=10, **kwargs):
     kwargs.setdefault('threadCount', 5)
     kwargs.setdefault('cleanHTML', True)
     kwargs.setdefault('cleanHTMLReportFailure', True)
+    kwargs.setdefault('boilerplateRmMethod', 'boilerpy3.ArticleExtractor')
     kwargs.setdefault('addResponseHeader', False)
     kwargs.setdefault('extractLinks', False)
     kwargs.setdefault('fromMainText', False)
@@ -453,7 +469,7 @@ def parallelGetTxtFrmURIs(urisLst, updateRate=10, **kwargs):
 
 
         if( kwargs['cleanHTML'] is True ):
-            text = cleanHtml(html, reportFailure=kwargs['cleanHTMLReportFailure'])
+            text = cleanHtml(html, method=kwargs['boilerplateRmMethod'], reportFailure=kwargs['cleanHTMLReportFailure'])
         else:
             text = html
         
